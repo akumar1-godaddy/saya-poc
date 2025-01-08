@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the IAM Custom Role Service Catalog Product.
+Parameters:
+  RoleNameSuffix:
+    Type: String
+    Description: Name of custom Role appended to TeamName-custom-
+  ManagedPolicyArns:
+    Type: String
+    Description: Comma delimited list of Managed IAM Policy ARNs to attach to the Role (but marked as String). Please be aware these ARNs are account specific. In this example we are providing the format for an ARN of the IAM::Policy that was created providing permissions to RedShift
+  AssumingServices:
+    Type: String
+    Description: Comma delimited list of Services that needs to assume the role (but marked as String)
+    Default: ""
+  AssumingRoles:
+    Type: String
+    Description: Comma delimited list of Services that needs to assume the role (but marked as String)
+    Default: ""
+  ExternalIDThatAssumeRole:
+    Type: String
+    Description: A unique ID provided by third party used to further restrict assume role operation, making it more secure.
+    Default: ""
+  ExternalAccountIdThatAssumeRole:
+    Type: String
+    Description: External Account ID that need to assume the Role
+    Default: ""
+  EmrEc2DefaultRoleArn:
+    Type: String
+    Description: The ARN of the EMR EC2 default role that needs to assume the role with the sts:TagSession action
+    Default: ""
+
+Resources:
+  IAMRole:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: IAMRole
+      ProvisioningArtifactName: 2.1.0
+      ProvisionedProductName: !Sub ${RoleNameSuffix}-role
+      ProvisioningParameters:
+        - Key: AssumingServices
+          Value: !Ref AssumingServices
+        - Key: AssumingRoles
+          Value: !Ref AssumingRoles
+        - Key: RoleNameSuffix
+          Value: !Ref RoleNameSuffix
+        - Key: ExternalIDThatAssumeRole
+          Value: !Ref ExternalIDThatAssumeRole
+        - Key: ExternalAccountIdThatAssumeRole
+          Value: !Ref ExternalAccountIdThatAssumeRole
+        - Key: ManagedPolicyArns
+          Value: !Join [ ",", [!Ref ManagedPolicyArns, !Sub "arn:aws:iam::${AWS::AccountId}:policy/AllowResourcesAccessToCloudWatchPolicy"] ]
+        - Key: EmrEc2DefaultRoleArn
+          Value: !Ref EmrEc2DefaultRoleArn
+      Tags:
+        - Key: doNotShutDown
+          # change to false if it can be turned off outside of business hours
+          Value: "true"
+
+Outputs:
+  StackArn:
+    Value: !GetAtt IAMRole.CloudformationStackArn
+    Description: The ARN of the created cloud formation stack
+  RoleARN:
+    Value: !GetAtt IAMRole.Outputs.RoleARN
+    Description: ARN of custom IAM Role
+  RoleSSMParamName:
+    Description: ARN of custom IAM Role param in SSM
+    Value: !GetAtt IAMRole.Outputs.RoleSSMParamName
+
+

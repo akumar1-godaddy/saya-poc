@@ -1,0 +1,285 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy Common Alarms for container insights metrics
+Parameters:
+  ClusterName:
+    Type: String
+  EnvironmentName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /AdminParams/Team/Environment
+  WarningNotifyTopicName:
+    Description: SNS topic to publish to for warning alarms
+    Type: String
+  CriticalNotifyTopicName:
+    Description: SNS topic to publish to for critical alarms
+    Type: String
+  PodMemoryCriticalPercent:
+    Description: Percentage of pod memory usage that will trigger an alarm
+    Type: Number
+    Default: 80
+  PodCPUCriticalPercent:
+    Description: Percentage of pod CPU usage that will trigger an alarm
+    Type: Number
+    Default: 80
+  NodeMemoryCriticalPercent:
+    Description: Percentage of node memory usage that will trigger an alarm
+    Type: Number
+    Default: 80
+  NodeCPUCriticalPercent:
+    Description: Percentage of node CPU usage that will trigger an alarm
+    Type: Number
+    Default: 80
+  NodeDiskCriticalPercent:
+    Description: Percentage of node Disk usage that will trigger an alarm
+    Type: Number
+    Default: 80
+  PodMemoryWarningPercent:
+    Description: Percentage of pod memory usage that will trigger an alarm
+    Type: Number
+    Default: 65
+  PodCPUWarningPercent:
+    Description: Percentage of pod CPU usage that will trigger an alarm
+    Type: Number
+    Default: 65
+  NodeMemoryWarningPercent:
+    Description: Percentage of node memory usage that will trigger an alarm
+    Type: Number
+    Default: 65
+  NodeCPUWarningPercent:
+    Description: Percentage of node CPU usage that will trigger an alarm
+    Type: Number
+    Default: 65
+  NodeDiskWarningPercent:
+    Description: Percentage of node Disk usage that will trigger an alarm
+    Type: Number
+    Default: 65
+Resources:
+  PodMemoryWarning:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      AlarmName: !Sub Pod Memory Usage Percentage Warning ${EnvironmentName} ${ClusterName}
+      AlarmDescription: !Sub fires when any pod in the ${ClusterName} cluster is using 65 percent of its memory utilization for 3 periods over the last 10 periods
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: pod_memory_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: PodMemoryWarningPercent
+  PodCPUWarning:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      AlarmName: !Sub Pod CPU Usage Percentage Warning ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any pod in the ${ClusterName} cluster is using 65 percent of its cpu utilization for 3 periods over the last 10 periods
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: pod_cpu_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: PodCPUWarningPercent
+  NodeDiskWarning:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      AlarmName: !Sub Node Disk Usage Percentage Warning ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any node in the ${ClusterName} cluster is using 65 percent of its disk space
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: node_filesystem_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: NodeDiskWarningPercent
+  NodeMemoryWarning:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      AlarmName: !Sub Node Memory Percentage Warning ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any node in the ${ClusterName} cluster is using ${NodeMemoryWarningPercent} percent of its total memory utilization for 3 periods over the last 10 periods
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: node_memory_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: NodeMemoryWarningPercent
+  NodeCPUWarning:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${WarningNotifyTopicName}
+      AlarmName: !Sub Node CPU Percentage Warning ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any node in the ${ClusterName} is using 65 percent of its total CPU utilization for 3 periods over the last 10 periods
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: node_cpu_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: NodeCPUWarningPercent
+  PodMemoryCritical:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      AlarmName: !Sub Pod Memory Usage Percentage Critical ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any pod in the ${ClusterName} is using 80 percent of its memory utilization for 3 periods over the last 10 periods
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: pod_memory_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: PodMemoryCriticalPercent
+  PodCPUCritical:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      AlarmName: !Sub Pod CPU Usage Percentage Critical ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any pod in the ${ClusterName} is using 80 percent of its cpu utilization for 3 periods over the last 10 periods
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: pod_cpu_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: PodCPUCriticalPercent
+  NodeDiskCritical:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      AlarmName: !Sub Node Disk Usage Percentage Critical ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any node in the ${ClusterName} is using 80 percent of its disk space
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: node_filesystem_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: NodeDiskCriticalPercent
+  NodeMemoryCritical:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      AlarmName: !Sub Node Memory Percentage Critical ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any node in the ${ClusterName} is using ${NodeMemoryCriticalPercent} percent of its total memory utilization for 3 periods over the last 10 periods
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: node_memory_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: NodeMemoryCriticalPercent
+  NodeCPUCritical:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      AlarmName: !Sub Node CPU Percentage Critical ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any node in the ${ClusterName} is using 80 percent of its total CPU utilization for 3 periods over the last 10 periods
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: node_cpu_utilization
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold:
+        Ref: NodeCPUCriticalPercent
+  ClusterFailedWorkerNodeCritical:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      OKActions:
+        - !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${CriticalNotifyTopicName}
+      AlarmName: !Sub Cluster Worker Node failure Critical ${EnvironmentName} ${ClusterName}
+      AlarmDescription:  !Sub fires when any worker node in the ${ClusterName} has failed for 3 periods over the last 10 periods
+      ComparisonOperator: GreaterThanThreshold
+      DatapointsToAlarm: 3
+      Dimensions:
+        - Name: ClusterName
+          Value: !Sub ${ClusterName}
+      EvaluationPeriods: 10
+      MetricName: cluster_failed_node_count
+      Namespace: ContainerInsights
+      Period: 60
+      Statistic: Maximum
+      Threshold: 0

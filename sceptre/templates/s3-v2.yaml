@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the landing zone S3 bucket
+Parameters:
+  BucketNameSuffix:
+    Type: String
+    Description: "bucket name suffix"
+  ReadOnlyRoles:
+    Type: CommaDelimitedList
+    Description: (Optional) List of IAM roles that will have read-only access to the S3 bucket. This will be ignored if CustomBucketPolicyJSON is specified.
+    Default: ""
+  ReadWriteRoles:
+    Type: CommaDelimitedList
+    Description: (Optional) List of IAM roles that will have read-write access to the S3 bucket. This will be ignored if CustomBucketPolicyJSON is specified.
+    Default: ""
+  ReadWriteDeleteRoles:
+    Type: CommaDelimitedList
+    Description: (Optional) List of IAM roles that will have read-write-delete access to the S3 bucket. This will be ignored if CustomBucketPolicyJSON is specified.
+    Default: ""
+  CustomBucketPolicyStatements:
+    Type: String
+    Description: Custom JSON S3 Bucket Policy
+    Default: ""
+Resources:
+  Bucket:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: S3
+      ProvisioningArtifactName: 3.6.0
+      ProvisionedProductName: !Ref BucketNameSuffix
+      ProvisioningParameters:
+        - Key: BucketNameSuffix
+          Value: !Ref BucketNameSuffix
+        - Key: ReadOnlyRoles
+          Value: !Join [ ",", !Ref ReadOnlyRoles ]
+        - Key: ReadWriteRoles
+          Value: !Join [ ",", !Ref ReadWriteRoles ]
+        - Key: ReadWriteDeleteRoles
+          Value: !Join [ ",", !Ref ReadWriteDeleteRoles ]
+        - Key: CustomBucketPolicyStatements
+          Value: !Ref CustomBucketPolicyStatements
+      Tags:
+        - Key: doNotShutDown
+          Value: true
+Outputs:
+  BucketName:
+    Description: Name of created S3 Bucket
+    Value: !GetAtt Bucket.Outputs.BucketName
+  ARN:
+    Description: ARN of created S3 Bucket
+    Value: !GetAtt Bucket.Outputs.ARN

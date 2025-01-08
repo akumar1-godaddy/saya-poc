@@ -1,0 +1,24 @@
+environment: dev-private
+dns_environment: dp
+
+cluster_name: ""
+wafv2ACLArn: ""
+subnets: ""
+
+deregistration_delay:
+ timeout_seconds: "30"
+
+slow_start:
+ duration_seconds: "30"
+
+https:
+ enabled: "true"
+
+aws:
+ region: "us-west-2"
+
+access_logs:
+ enabled: "true"
+
+external_endpoint:
+ prefix: ""

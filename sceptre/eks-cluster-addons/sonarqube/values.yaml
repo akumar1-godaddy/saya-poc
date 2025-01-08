@@ -1,0 +1,35 @@
+nodeSelector:
+  kubernetes.io/arch: amd64
+persistence:
+  enabled: false
+image:
+  tag: 9.8.0-community
+
+postgresql:
+  primary:
+    nodeSelector: 
+      kubernetes.io/arch: amd64
+
+sonarProperties:
+  sonar.web.host: 0.0.0.0
+
+ingress:
+  enabled: true
+  hosts:
+    - name: uip-sonar.api.int.dev-godaddy.com
+      path: /
+      pathType: Prefix
+      serviceName: sonarqube-sonarqube
+      servicePort: 9000
+  ingressClassName: alb
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /api/system/status
+    alb.ingress.kubernetes.io/healthcheck-port: "9000"
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTPS\":443}]"
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+    alb.ingress.kubernetes.io/tags: Environment=dev-private,Team=user-insights-platform,doNotShutDown=true,legal=USA
+    alb.ingress.kubernetes.io/subnets: subnet-0574fca27158b3a4e,subnet-0f7c7bc429352c455
+    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-west-2:419893066442:regional/webacl/UIP-Regional-WebACL/9007c145-289f-40c5-b9c1-356d7e40e256
+    

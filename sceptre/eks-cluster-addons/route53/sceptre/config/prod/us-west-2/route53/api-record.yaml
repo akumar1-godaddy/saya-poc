@@ -1,0 +1,7 @@
+template_path: latency-recordset.yaml
+
+parameters:
+  AwsRegion: {{ region }}
+  Environment: {{ environment }}
+  ALBDNSName: {{ var.alb_dns_name }}
+  ALBHostedZoneId: {{ var.alb_hosted_zoneid }}

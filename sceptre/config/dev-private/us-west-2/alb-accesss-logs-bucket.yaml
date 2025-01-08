@@ -1,0 +1,5 @@
+template_path: eks/addons/alb-access-logs-s3.yaml
+parameters:
+  BucketNameSuffix: alb-access-logs-v2-{{ region }}
+  Environment: {{ environment }}
+  ProjectName: {{ project_name }}

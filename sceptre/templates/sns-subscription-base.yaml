@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: SNS Subscription Template
+Parameters:
+  Name:
+    Type: String
+    Description: The provisioned product name in S3
+  Endpoint:
+    Type: String
+    Description: (optional) The endpoint that receives notifications from the Amazon SNS topic. The endpoint value depends on the protocol that you specify.
+    Default: ""
+  FilterPolicy:
+    Type: String
+    Description: (optional) The filter policy JSON that is assigned to the subscription.
+    Default: ""
+  Protocol:
+    Type: String
+    Description: The subscription's protocol.
+    Default: lambda
+  RawMessageDelivery:
+    Type: String
+    Description: (optional) true if raw message delivery is enabled for the subscription. Raw messages are free of JSON formatting and can be sent to HTTP/S and Amazon SQS endpoints.
+    Default: ""
+    AllowedValues:
+      - true
+      - false
+      - ""
+  Region:
+    Type: String
+    Description: (optional) The region in which the topic resides.
+  TopicArn:
+    Type: String
+    Description: The Amazon Resource Name (ARN) of the topic to subscribe to.
+  DoNotShutDown:
+    Type: String
+    Description: enable to set the doNotShutDown tag
+    Default: true
+
+Resources:
+  SnsSubscription:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: SNSSubscription
+      ProvisioningArtifactName: 1.1.0
+      ProvisionedProductName: !Ref Name
+      ProvisioningParameters:
+        - Key: Endpoint
+          Value: !Ref Endpoint
+        - Key: FilterPolicy
+          Value: !Ref FilterPolicy
+        - Key: Protocol
+          Value: !Ref Protocol
+        - Key: RawMessageDelivery
+          Value: !Ref RawMessageDelivery
+        - Key: Region
+          Value: !Ref Region
+        - Key: TopicArn
+          Value: !Ref TopicArn
+      Tags:
+        - Key: doNotShutDown
+          Value: !Ref DoNotShutDown

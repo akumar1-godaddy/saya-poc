@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metricbeat-daemonset-config
+  namespace: kube-system
+  labels:
+    k8s-app: metricbeat
+    app.kubernetes.io/managed-by: Helm
+data:
+  metricbeat.yml: |-
+    metricbeat.config.modules:
+      # Mounted `metricbeat-daemonset-modules` configmap:
+      path: ${path.config}/modules.d/*.yml
+      # Reload module configs as they change:
+      reload.enabled: true
+    metricbeat.autodiscover:
+      providers:
+        - type: kubernetes
+          templates:
+            - condition.equals:
+                kubernetes.annotations.prometheus.io/scrape: "true"
+              config:
+                - module: prometheus
+                  period: 10s
+                  # Prometheus exporter host / port
+                  hosts: ["${data.host}:${data.kubernetes.annotations.prometheus.io/port}"]
+                  metrics_path: "${data.kubernetes.annotations.prometheus.io/endpoint}"
+                  use_types: true
+                  rate_counters: true
+    processors:
+      - add_fields:
+          target: aws
+          fields:
+            region: ${AWS_REGION}
+      - drop_event:
+          when:
+            equals:
+              prometheus.labels.area: "nonheap"
+      - drop_fields:
+           fields: ["event", "agent", "ecs", "metricset", "service", "kubernetes.pod.uid", "kubernetes.namespace_labels.kubernetes_io/metadata_name", "kubernetes.node.labels.eks_amazonaws_com/sourceLaunchTemplateId", "kubernetes.node.labels.eks_amazonaws_com/sourceLaunchTemplateVersion", "kubernetes.node.uid", "kubernetes.node.labels.topology_kubernetes_io/zone", "kubernetes.node.labels.eks_amazonaws_com/nodegroup-image", "kubernetes.node.labels.beta_kubernetes_io/instance-type", "kubernetes.node.labels.eks_amazonaws_com/nodegroup", "kubernetes.node.labels.beta_kubernetes_io/os", "container.id", "container.image.name", "host.name", "kubernetes.node.labels.kubernetes_io/hostname", "kubernetes.namespace_labels.elbv2_k8s_aws/pod-readiness-gate-inject", "kubernetes.node.labels.beta_kubernetes_io/arch", "kubernetes.node.labels.eks_amazonaws_com/capacityType", "kubernetes.node.labels.k8s_io/cloud-provider-aws", "kubernetes.node.labels.node-group", "kubernetes.node.labels.kubernetes_io/os", "kubernetes.node.labels.node_kubernetes_io/instance-type", "kubernetes.node.labels.topology_ebs_csi_aws_com/zone", "kubernetes.node.labels.topology_kubernetes_io/region", "kubernetes.node.labels.failure-domain_beta_kubernetes_io/region", "kubernetes.node.labels.kubernetes_io/arch", "kubernetes.node.name", "kubernetes.pod.ip", "kubernetes.node.labels.failure-domain_beta_kubernetes_io/zone", "container.runtime", "kubernetes.namespace_uid", "kubernetes.namespace", "kubernetes.container", "kubernetes.replicaset", "kubernetes.labels.linkerd_io/control-plane-ns", "kubernetes.labels.linkerd_io/proxy-deployment", "kubernetes.labels.linkerd_io/workload-ns", "kubernetes.labels.pod-template-hash"]
+           ignore_missing: true
+    cloud.id: ${ELASTIC_CLOUD_ID}
+    cloud.auth: ${ELASTICSEARCH_USERNAME}:${ELASTIC_CLOUD_AUTH}
+    output.elasticsearch:
+      hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
+      username: ${ELASTICSEARCH_USERNAME}
+      password: ${ELASTICSEARCH_PASSWORD}
+    setup.ilm.enabled: true
+    setup.ilm.rollover_alias: "metricbeat"
+    setup.ilm.pattern: "{now/d}-000001"
+    setup.ilm.policy_name: "metricbeat"
+    setup.ilm.check_exists: "true"
+    setup.ilm.overwrite: "false"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metricbeat-daemonset-modules
+  namespace: kube-system
+  labels:
+    k8s-app: metricbeat
+    app.kubernetes.io/managed-by: Helm
+data:
+  kubernetes.yml: |-
+    - module: kubernetes
+      period: 10s
+      host: ${NODE_NAME}
+      hosts:
+        - https://${NODE_NAME}:10250
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      ssl.verification_mode: "none"
+      metricsets:
+        - pod
+        - container
+    - module: kubernetes
+      period: 30s
+      host: ${NODE_NAME}
+      metricsets:
+        - state_deployment
+        - state_replicaset
+      hosts: ["kube-state-metrics:8080"]
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+

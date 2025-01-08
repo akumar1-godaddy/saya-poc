@@ -1,0 +1,5 @@
+template_path: ebs-driver-service-account.yaml
+parameters:
+  ClusterName: "{{ cluster_name }}"
+dependencies:
+  - {{ environment }}/{{ region }}/{{ eks_folder_name }}/eks.yaml

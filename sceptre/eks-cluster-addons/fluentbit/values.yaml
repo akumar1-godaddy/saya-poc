@@ -1,0 +1,4 @@
+environment: dev-private
+aws_region: us-west-2
+image_tag: 2.27.0
+cluster_name: ""

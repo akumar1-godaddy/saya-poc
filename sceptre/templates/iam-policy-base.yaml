@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the IAM Custom Policy Service Catalog Product
+Parameters:
+  DevelopmentTeam:
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: SSM Parameter for team owning the created resources.
+    Default: /AdminParams/Team/Name
+    AllowedValues:
+      - /AdminParams/Team/Name
+  PolicyNameSuffix:
+    Type: String
+    Description: Name of custom Policy appended to TeamName-custom-
+  PolicyJSON:
+    Type: String
+    Description: JSON string of IAM Policy Document
+
+Resources:
+  IAMPolicy:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: IAMPolicy
+      ProvisioningArtifactName: 1.0.0
+      ProvisionedProductName: !Sub ${PolicyNameSuffix}-iam-policy
+      ProvisioningParameters:
+        - Key: PolicyNameSuffix
+          Value: !Ref PolicyNameSuffix
+        - Key: PolicyJSON
+          Value: !Ref PolicyJSON
+      Tags:
+        - Key: doNotShutDown
+          # change to false if it can be turned off outside of business hours
+          Value: "true"
+Outputs:
+  PolicyARN:
+    Description: ARN of custom IAM Managed Policy
+    Value: !Sub arn:aws:iam::${AWS::AccountId}:policy/${DevelopmentTeam}-custom-${PolicyNameSuffix}

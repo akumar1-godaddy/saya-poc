@@ -1,0 +1,13 @@
+template_path: eks/eks-managed-nodegroup.yaml
+parameters:
+  ClusterName: "{{ cluster_name }}{{ resource_suffix }}"
+  KubernetesVersion: "{{ kubernetes_version }}"
+  NodeGroupName: {{ cluster_name }}-arm64-b{{ resource_suffix }}
+  UseARM: "true"
+  NodeInstanceType: t4g.medium
+  NodeGroupMinSize: "1"
+  NodeGroupMaxSize: "78"
+  DXAppSubnetIds: /AdminParams/VPC/DxAppSubnets
+  NodeVolumeType: gp3
+dependencies:
+  - {{ environment }}/{{ region }}/{{ eks_folder_name }}/eks.yaml

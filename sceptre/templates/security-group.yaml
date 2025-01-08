@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the SecurityGroupIngressRule Service Catalog Product
+Parameters:
+  Port:
+    Type: Number
+    Description: Port to open up
+  DestinationSecurityGroupIdSSMParam:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::SecurityGroup::Id>
+    Description: SSM Parameter for the existing SG to add Rule to
+    Default: /AdminParams/VPC/PrivateDbSG
+  TrustedSecurityGroupIdSSMParam:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::SecurityGroup::Id>
+    Description: SSM Parameter for an existing SG to allow access from
+    Default: /AdminParams/VPC/PrivateDbSG
+  Description:
+    Type: String
+  ProvisionedProductName:
+    Type: String
+Resources:
+  SecurityGroupRule:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: SecurityGroupIngressRule
+      ProvisioningArtifactName: 1.0.1
+      ProvisionedProductName: !Ref ProvisionedProductName
+      ProvisioningParameters:
+        # required parameters
+        - Key: FromPort
+          Value: !Ref Port
+        - Key: ToPort
+          Value: !Ref Port
+        - Key: Protocol
+          Value: TCP
+        - Key: DestinationSecurityGroupId
+          Value: !Ref DestinationSecurityGroupIdSSMParam
+        - Key: SourceSecurityGroupId
+          Value: !Ref TrustedSecurityGroupIdSSMParam
+        - Key: Description
+          Value: !Ref Description
+      Tags:
+        - Key: doNotShutDown
+          Value: true

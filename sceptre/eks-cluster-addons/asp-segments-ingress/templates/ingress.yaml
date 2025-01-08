@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: asp-segments{{ .Values.regional_endpoint.suffix }}
+  namespace: uip
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/load-balancer-name: asp-segments{{ .Values.regional_endpoint.suffix }}-{{ .Values.cluster_name }}
+{{- if .Values.https.enabled }}
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTPS\":443}]"
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+{{- end }}
+    alb.ingress.kubernetes.io/tags: Environment={{ .Values.environment }},Team=user-insights-platform,doNotShutDown=true,legal=USA
+    alb.ingress.kubernetes.io/subnets: {{ .Values.subnets }}
+    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled={{ .Values.access_logs.enabled }},access_logs.s3.bucket={{ .Values.access_logs.s3bucket }},access_logs.s3.prefix=apis,deletion_protection.enabled=true
+{{- if .Values.wafv2ACLArn }}
+    alb.ingress.kubernetes.io/wafv2-acl-arn: {{ .Values.wafv2ACLArn }}
+{{- end }}
+    alb.ingress.kubernetes.io/target-group-attributes: "deregistration_delay.timeout_seconds={{ .Values.deregistration_delay.timeout_seconds }}"
+spec:
+  rules:
+{{- if (eq .Values.environment "prod") }}
+    - host: asp-segments{{ .Values.regional_endpoint.suffix }}.api.int.godaddy.com
+{{- else if (eq .Values.environment "dev-private") }}
+    - host: asp-segments-{{ .Values.dns_environment }}{{ .Values.regional_endpoint.suffix }}.api.int.dev-godaddy.com
+{{- else }}
+    - host: asp-segments.api.int.{{ .Values.dns_environment }}-godaddy.com
+{{- end }}
+      http:
+        paths:
+          - path: /v1/segment-data-store
+            pathType: Prefix
+            backend:
+              service:
+                name: asp-data-access-impl
+                port:
+                  number: 80

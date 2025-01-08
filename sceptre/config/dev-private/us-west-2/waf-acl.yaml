@@ -1,0 +1,19 @@
+template_path: waf-acl.yaml
+parameters:
+  ACLPrefix: UIP
+  RateLimit: "1000000"
+  CommonRuleExcludesJson: |
+    [
+      {
+        "Name": "GenericRFI_BODY"
+      },
+      {
+        "Name": "SizeRestrictions_BODY"
+      },
+      {
+        "Name": "CrossSiteScripting_BODY"
+      },
+      {
+        "Name": "EC2MetaDataSSRF_BODY"
+      }
+    ]

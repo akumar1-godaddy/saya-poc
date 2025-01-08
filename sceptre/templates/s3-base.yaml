@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creating S3 bucket
+Parameters:
+  ServiceCatalogVersion:
+    Type: String
+    Description: Service Catalog version for S3
+    Default: 1.20.0
+  BucketNameSuffix:
+    Type: String
+    Description: Suffix for your bucket name
+  DevelopmentTeam:
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: SSM Parameter for team owning the created resources.
+    Default: /AdminParams/Team/Name
+    AllowedValues:
+      - /AdminParams/Team/Name
+  MoveToGlacierStorageDays:
+    Type: Number
+    Description: (Optional) Days before moving objects to Glacier. Set to -1 to never move. Defaults to never moving. Ignored if `CustomS3Bucket` is specified.
+    Default: -1
+  CustomLifecycleRules:
+    Type: String
+    Description: Custom lifecycle rules.
+    Default: "[]"
+  DevelopmentEnvironment:
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: SSM Parameter for development environment this will live in.
+    Default: /AdminParams/Team/Environment
+    AllowedValues:
+      - /AdminParams/Team/Environment
+  BucketPolicy:
+    Type: String
+    Description: Choice of pre-defined ACLS for the bucket
+    Default: Private
+    AllowedValues:
+      - Private
+      - LogDeliveryWrite
+      - AwsExecRead
+      - BucketOwnerRead
+      - BucketOwnerFullControl
+      - PublicRead
+      - AuthenticatedRead
+  CustomBucketPolicyJSON:
+    Type: String
+    Description: Custom JSON S3 Bucket Policy
+    Default: ""
+  NotificationConfigurationJson:
+    Type: String
+    Description: (optional) JSON definition of S3 Notification Configuration https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket-notificationconfig.html
+    Default: ""
+  DoNotShutDown:
+    Type: String
+    Description: enable to set the doNotShutDown tag
+    Default: true
+  ReadOnlyRoles:
+    Type: CommaDelimitedList
+    Description: (Optional) List of IAM roles that will have read-only access to the S3 bucket. This will be ignored if CustomBucketPolicyJSON is specified.
+    Default: ""
+  ReadWriteRoles:
+    Type: CommaDelimitedList
+    Description: (Optional) List of IAM roles that will have read-write access to the S3 bucket. This will be ignored if `CustomBucketPolicyJSON` is specified.
+    Default: ""
+
+Resources:
+  S3Bucket:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: S3
+      ProvisioningArtifactName: !Ref ServiceCatalogVersion
+      ProvisionedProductName: !Sub gd-${DevelopmentTeam}-${DevelopmentEnvironment}-${BucketNameSuffix}
+      ProvisioningParameters:
+        - Key: BucketNameSuffix
+          Value: !Ref BucketNameSuffix
+        - Key: BucketPolicy
+          Value: !Ref BucketPolicy
+        - Key: CustomBucketPolicyJSON
+          Value: !Ref CustomBucketPolicyJSON
+        - Key: ReadOnlyRoles
+          Value: !Join [ ",", !Ref ReadOnlyRoles ]
+        - Key: ReadWriteRoles
+          Value: !Join [ ",", !Ref ReadWriteRoles ]
+        - Key: NotificationConfigurationJson
+          Value: !Ref NotificationConfigurationJson
+        - Key: MoveToGlacierStorageDays
+          Value: !Ref MoveToGlacierStorageDays
+        - Key: CustomLifecycleRules
+          Value: !Ref CustomLifecycleRules
+      Tags:
+        - Key: doNotShutDown
+          Value: !Ref DoNotShutDown
+Outputs:
+  BucketName:
+    Description: Name of created S3 Bucket
+    Value: !Sub gd-${DevelopmentTeam}-${DevelopmentEnvironment}-${BucketNameSuffix}
+  BucketArn:
+    Description: ARN of created bucket
+    Value: !Sub arn:aws:s3:::gd-${DevelopmentTeam}-${DevelopmentEnvironment}-${BucketNameSuffix}

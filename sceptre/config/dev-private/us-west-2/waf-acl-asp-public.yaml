@@ -1,0 +1,30 @@
+template_path: waf-acl.yaml
+parameters:
+  ACLPrefix: ASP-public
+  RateLimit: "1000000"
+  AllowListIPv4:
+    - '132.148.54.224/32'  # cvpn.phx3.secureserver.net
+    - '160.153.26.224/32'  # cvpn.ams3.secureserver.net
+    - '132.148.92.224/32'  # cvpn.iad2.secureserver.net
+    - '34.228.135.55/32'   # uip dev-private us-east-1
+    - '54.148.18.58/32'    # uip dev-private us-west-2
+    - '44.227.56.169/32'   # martechdata dev-private us-west-2 nat-gateway-az-a
+    - '44.224.232.16/32'   # martechdata dev-private us-west-2 nat-gateway-az-b
+    - '44.226.50.202/32'   # martechdata dev-private us-west-2 nat-gateway-az-c
+    - '44.233.52.154/32'   # (pricing) dev-private us-west-2 nat-gateway-az-a
+    - '35.153.240.172/32'  # (pricing) dev-private us-east-1 nat-gateway-az-a
+  CommonRuleExcludesJson: |
+    [
+      {
+        "Name": "GenericRFI_BODY"
+      },
+      {
+        "Name": "SizeRestrictions_BODY"
+      },
+      {
+        "Name": "CrossSiteScripting_BODY"
+      },
+      {
+        "Name": "EC2MetaDataSSRF_BODY"
+      }
+    ]

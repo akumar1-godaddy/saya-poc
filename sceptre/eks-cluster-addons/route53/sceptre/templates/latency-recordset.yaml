@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the recordset
+Parameters:
+  Endpoint:
+    Description: endpoint
+    Type: String
+    Default: api
+  AwsRegion:
+    Description: aws region
+    Type: String
+  Environment:
+    Description: environment, dev, test, ote, prod
+    Type: String
+  ALBDNSName:
+    Description: dns name
+    Type: String
+  ALBHostedZoneId:
+    Description: alias alb hosted zone id
+    Type: String
+Resources:
+  UipRecordSetUSWest2:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: RecordSet
+      ProvisioningArtifactName: 1.0.2
+      ProvisionedProductName: !Sub "uip-recordset-${AwsRegion}-${Endpoint}"
+      ProvisioningParameters:
+        - Key: Name
+          Value: !Sub "${Endpoint}.uip.${Environment}.aws.gdcld.net."
+        - Key: AliasHostedZoneId
+          Value: !Ref ALBHostedZoneId
+        - Key: DNSName
+          Value: !Ref ALBDNSName
+        - Key: RecordType
+          Value: A
+        - Key: HostedZoneName
+          Value: !Sub "uip.${Environment}.aws.gdcld.net."
+        - Key: EvaluateTargetHealth
+          Value: "true"
+        - Key: Region
+          Value: !Ref AwsRegion
+        - Key: SetIdentifier
+          Value: !Sub "${Endpoint}-${AwsRegion}"
+      Tags:
+        - Key: doNotShutDown
+          Value: true

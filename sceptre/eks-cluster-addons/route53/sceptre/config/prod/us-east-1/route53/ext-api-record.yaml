@@ -1,0 +1,8 @@
+template_path: latency-recordset.yaml
+
+parameters:
+  Endpoint: "ext-api"
+  AwsRegion: {{ region }}
+  Environment: {{ environment }}
+  ALBDNSName: {{ var.ext_alb_dns_name }}
+  ALBHostedZoneId: {{ var.ext_alb_hosted_zoneid }}

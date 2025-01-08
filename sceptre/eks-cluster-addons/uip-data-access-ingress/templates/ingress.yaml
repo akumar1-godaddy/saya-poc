@@ -1,0 +1,54 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: uip-data-access{{ .Values.regional_endpoint.suffix }}
+  namespace: uip
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/load-balancer-name: uip{{ .Values.regional_endpoint.suffix }}-{{ .Values.cluster_name }}
+{{- if .Values.https.enabled }}
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTPS\":443}]"
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+{{- end }}
+    alb.ingress.kubernetes.io/tags: Environment={{ .Values.environment }},Team=user-insights-platform,doNotShutDown=true,legal=USA
+    alb.ingress.kubernetes.io/subnets: {{ .Values.subnets }}
+    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled={{ .Values.access_logs.enabled }},access_logs.s3.bucket={{ .Values.access_logs.s3bucket }},access_logs.s3.prefix=apis,deletion_protection.enabled=true
+{{- if .Values.wafv2ACLArn }}
+    alb.ingress.kubernetes.io/wafv2-acl-arn: {{ .Values.wafv2ACLArn }}
+{{- end }}
+    alb.ingress.kubernetes.io/target-group-attributes: "deregistration_delay.timeout_seconds={{ .Values.deregistration_delay.timeout_seconds }}"
+spec:
+  rules:
+{{- if (eq .Values.environment "prod") }}
+    - host: uip-data-access{{ .Values.regional_endpoint.suffix }}.api.int.godaddy.com
+{{- else if (eq .Values.environment "dev-private") }}
+    - host: uip-data-access-{{ .Values.dns_environment }}{{ .Values.regional_endpoint.suffix }}.api.int.dev-godaddy.com
+{{- else }}
+    - host: uip-data-access.api.int.{{ .Values.dns_environment }}-godaddy.com
+{{- end }}
+      http:
+        paths:
+          # Subscription Insights API
+          - path: /v1/subscriptions/insights/mutate
+            pathType: Exact
+            backend:
+              service:
+                name: subscription-ingest-api
+                port:
+                  number: 80
+          - path: /v1/insight-data-store/subscription
+            pathType: Prefix
+            backend:
+              service:
+                name: uip-data-access-impl
+                port:
+                  number: 80
+          - path: /v1/insight-data-store/user-aggregate
+            pathType: Prefix
+            backend:
+              service:
+                name: user-aggregate-data-access-impl
+                port:
+                  number: 80

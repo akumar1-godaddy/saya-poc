@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: WAFv2 Web ACL with IPv4/v6 allow list
+Parameters:
+  ACLPrefix:
+    Type: String
+    Description: Prefix to use for all related resources
+    AllowedPattern: ^[a-zA-Z0-9-]+$
+  RateLimit:
+    Type: Number
+    Description: Max calls per IP address per 5 minute window
+    Default: 3000
+  CommonRuleExcludesJson:
+    Type: String
+    Description: An optional, json string of rules to exclude from the AWSManagemendRulesCommonRuleSet.
+    Default: "[]"
+  AllowListIPv4:
+    Type: String
+    Description: An optional, comma-delimited list of IPv4 addresses (in CIDR notation) to allow. Default is empty.
+    Default: ""
+  CatalogProductVersion:
+    Type: String
+    Description: The version of the product to deploy
+    Default: 4.2.0
+
+Resources:
+  WAFv2Regional:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: WAFv2Regional
+      ProvisioningArtifactName: !Ref CatalogProductVersion
+      ProvisionedProductName: !Sub wafv2-regional-${ACLPrefix}
+      ProvisioningParameters:
+        - Key: ACLPrefix
+          Value: !Ref ACLPrefix
+        - Key: IPRateLimit
+          Value: !Ref RateLimit
+        - Key: CommonRuleExcludesJson
+          Value: !Ref CommonRuleExcludesJson
+        - Key: AllowListIPv4
+          Value: !Ref AllowListIPv4
+      Tags:
+        - Key: doNotShutDown
+          Value: "false"
+Outputs:
+  StackArn:
+    Value: !GetAtt WAFv2Regional.CloudformationStackArn
+    Description: The ARN of the created cloud formation stack

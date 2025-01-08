@@ -1,0 +1,7 @@
+environment: dev-private
+account_id: 911167911228
+debug_logging: "true"
+cluster_name: cni-service-mesh
+kubernetes_version: "1.30"
+region: us-west-2
+eks_folder_name: eks-v131

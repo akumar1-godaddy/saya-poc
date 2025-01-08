@@ -1,0 +1,20 @@
+apiVersion: crd.projectcalico.org/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-intra-namespace
+  namespace: app-namespace
+spec:
+  tier: application
+  order: 100
+  selector: app == 'frontend' && !quarantine
+  types:
+    - Ingress
+    - Egress
+  ingress:
+    - action: Allow
+      source:
+        selector: app == 'frontend' && !quarantine
+  egress:
+    - action: Allow
+      destination:
+        selector: app == 'frontend' && !quarantine

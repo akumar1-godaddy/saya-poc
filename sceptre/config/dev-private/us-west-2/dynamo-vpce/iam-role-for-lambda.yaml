@@ -1,0 +1,12 @@
+template_path: iam-role-base.yaml
+parameters:
+  IAMRoleProvisioningName: "1.0.7"
+  RoleNameSuffix: dynamo-vpce-lambda
+  AssumingServices:
+    - lambda.amazonaws.com
+
+  ManagedPolicyArns:
+    - !stack_output dev-private/us-west-2/dynamo-vpce/iam-policy-for-lambda.yaml::PolicyARN
+    - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+    - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+    - arn:aws:iam::911167911228:policy/AllowResourcesAccessToCloudWatchPolicy

@@ -1,0 +1,97 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.external_endpoint.prefix }}asp-services
+  namespace: uip
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+{{- if .Values.external_endpoint.prefix }}
+    alb.ingress.kubernetes.io/load-balancer-name: ext-asp-services-{{ .Values.cluster_name }}
+{{- else }}
+    alb.ingress.kubernetes.io/load-balancer-name: asp-services-{{ .Values.cluster_name }}
+{{- end}}
+{{- if .Values.https.enabled }}
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTPS\":443}]"
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+{{- end }}
+    alb.ingress.kubernetes.io/tags: Environment={{ .Values.environment }},Team=user-insights-platform,doNotShutDown=true,legal=USA
+    alb.ingress.kubernetes.io/subnets: {{ .Values.subnets }}
+    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled={{ .Values.access_logs.enabled }},access_logs.s3.bucket={{ .Values.access_logs.s3bucket }},access_logs.s3.prefix=apis,deletion_protection.enabled=true
+{{- if .Values.wafv2ACLArn }}
+    alb.ingress.kubernetes.io/wafv2-acl-arn: {{ .Values.wafv2ACLArn }}
+{{- end }}
+    alb.ingress.kubernetes.io/target-group-attributes: "deregistration_delay.timeout_seconds={{ .Values.deregistration_delay.timeout_seconds }}, slow_start.duration_seconds={{ .Values.slow_start.duration_seconds }}"
+spec:
+  rules:
+{{- if (eq .Values.environment "prod") }}
+    - host: {{ .Values.external_endpoint.prefix }}asp.api.int.godaddy.com
+{{- else if (eq .Values.environment "dev-private") }}
+    - host: {{ .Values.external_endpoint.prefix }}asp-{{ .Values.dns_environment }}.api.int.dev-godaddy.com
+{{- else }}
+    - host: {{ .Values.external_endpoint.prefix }}asp.api.int.{{ .Values.dns_environment }}-godaddy.com
+{{- end }}
+      http:
+        paths:
+          # Segment Registry service
+          - path: /docs/segment-registry
+            pathType: Prefix
+            backend:
+              service:
+                name: asp-segment-registry-api
+                port:
+                  number: 80
+          - path: /v1/segments
+            pathType: Prefix
+            backend:
+              service:
+                name: asp-segment-registry-api
+                port:
+                  number: 80
+          - path: /v1/producers
+            pathType: Prefix
+            backend:
+              service:
+                name: asp-segment-registry-api
+                port:
+                  number: 80
+
+          # Customer Segments API
+          - path: /v1/customers/segments/mutate
+            pathType: Exact
+            backend:
+              service:
+                name: asp-customer-ingest-api
+                port:
+                  number: 80
+          - path: /docs/customer-segments-ingest-api
+            pathType: Prefix
+            backend:
+              service:
+                name: asp-customer-ingest-api
+                port:
+                  number: 80
+#         # uncomment after asp deployment
+#          - path: /asp-customer-ingest-api/health
+#            pathType: Exact
+#            backend:
+#              service:
+#                name: asp-customer-ingest-api
+#                port:
+#                  number: 81
+          - path: /v1/segments/graphql
+            pathType: Prefix
+            backend:
+              service:
+                name: asp-graphql-router-api
+                port:
+                  number: 80
+#          - path: /v1/segments/healthcheck
+#            pathType: Exact
+#            backend:
+#              service:
+#                name: asp-graphql-router-api
+#                port:
+#                  number: 80
+

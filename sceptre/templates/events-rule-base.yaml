@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the Cloudwatch Events Rule Service Catalog Product.
+Parameters:
+  Name:
+    Type: String
+    Description: A name for the rule. If you don't specify a name, AWS CloudFormation generates a unique physical ID.
+  Description:
+    Type: String
+    Description: Description of the rule.
+    Default: ""
+  EventPattern:
+    Type: String
+    Description: (conditional, needed if ScheduleExpression not set) Describes which events CloudWatch Events routes to the specified target. Must be valid JSON.
+    Default: ""
+  ScheduleExpression:
+    Type: String
+    Description: (conditional, needed if EventPattern not set) Schedule that determines when CloudWatch Events route to specified targets.
+    Default: ""
+  TargetArnRef:
+    Type: String
+    Description: (optional) The resource name that CloudWatch Events routes events to.
+    Default: ""
+  TargetId:
+    Type: String
+    Description: (required if TargetArnRef is specified) A unique, user-defined identifier for the target.
+    Default: ""
+  Input:
+    Type: String
+    Description: (optional) JSON-formatted text string that is passed to the target.
+    Default: ""
+  ProductVersion:
+    Type: String
+    Description: (optional) Version number for product.
+    Default: 2.0.0
+  State:
+    Type: String
+    Description: (optional) State of the event rule, can be enabled to be turned on and disabled to be turned off.
+    Default: ENABLED
+    AllowedValues:
+      - ENABLED
+      - DISABLED
+  DoNotShutDown:
+    Type: String
+    Description: enable to set the doNotShutDown tag
+    Default: true
+
+Resources:
+  CloudWatchEventRule:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: EventsRule
+      ProvisioningArtifactName: !Ref ProductVersion
+      ProvisionedProductName: !Sub ${Name}-events-rule
+      ProvisioningParameters:
+        - Key: Name
+          Value: !Ref Name
+        - Key: Description
+          Value: !Ref Description
+        - Key: TargetArnRef
+          Value: !Ref TargetArnRef
+        - Key: TargetId
+          Value: !Ref TargetId
+        - Key: EventPattern
+          Value: !Ref EventPattern
+        - Key: ScheduleExpression
+          Value: !Ref ScheduleExpression
+        - Key: Input
+          Value: !Ref Input
+        - Key: State
+          Value: !Ref State
+      Tags:
+        - Key: doNotShutDown
+          Value: !Ref DoNotShutDown
+Outputs:
+  Name:
+    Description: Unique name for Rule
+    Value: !Ref Name
+  Arn:
+    Description: ARN for Rule
+    Value: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/${Name}

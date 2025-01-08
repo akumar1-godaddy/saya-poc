@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the EKS Service Catalog Product
+Parameters:
+  EksProductVersion:
+    Type: String
+    Default: 10.1.0
+  ClusterName:
+    Type: String
+  KubernetesVersion:
+    Type: String
+  CNIWarmIpTarget:
+    Type: String
+    Default: "5"
+  # pull Subnet IDs from SSM Parameter Store
+  PrivateSubnetIds:
+    Type: AWS::SSM::Parameter::Value<List<String>>
+    Description: SSM parameter referencing the Private subnet IDs
+    # use /AdminParams/VPC/DXAPPSubnets for Private DX subnets
+    Default: /AdminParams/VPC/PrivateSubnets
+  PublicSubnetIds:
+    Type: AWS::SSM::Parameter::Value<List<String>>
+    Description: SSM parameter referencing the Public Master subnet IDs
+    Default: /AdminParams/VPC/PublicSubnets
+  CustomIAMManagedWorkerNodeRoleNameSuffix:
+    Type: String
+    Description: (optional) Naming suffix (ex. team-custom-SUFFIX) of Custom IAM Role for worker instances to run as. Ensure the EC2 service can assume it.
+    Default: ""
+
+Resources:
+  KubernetesCluster:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: EKS
+      ProvisioningArtifactName: !Ref EksProductVersion
+      ProvisionedProductName: !Sub eks-${ClusterName}-control-plane
+      ProvisioningParameters:
+        # required parameters
+        - Key: KubernetesVersion
+          Value: !Ref KubernetesVersion
+        - Key: ClusterName
+          Value: !Ref ClusterName
+        - Key: VPCSubnetIds
+          # Need to pass all List params as a String, we combine Public + Private for Control Plans so that Load Balancers can be Public
+          Value: !Sub
+            - "${PublicMasterSubnetIds},${PrivateMasterSubnetIds}"
+            - { PublicMasterSubnetIds: !Join [ ",", !Ref PublicSubnetIds ], PrivateMasterSubnetIds: !Join [ ",", !Ref PrivateSubnetIds ] }
+        # common optional parameters
+        - Key: CNIWarmIpTarget
+          Value: !Ref CNIWarmIpTarget
+        - Key: AllowDBAccess
+          Value: "true"
+        - Key: CustomIAMManagedWorkerNodeRoleNameSuffix
+          Value: !Ref CustomIAMManagedWorkerNodeRoleNameSuffix
+        # needed for subnet tagging for aws-load-balancer-controller.
+        - Key: LBSubnetIds
+          Value: !Sub
+            - "${PublicMasterSubnetIds},${PrivateMasterSubnetIds}"
+            - { PublicMasterSubnetIds: !Join [ ",", !Ref PublicSubnetIds ], PrivateMasterSubnetIds: !Join [ ",", !Ref PrivateSubnetIds ] }
+
+      Tags:
+        - Key: doNotShutDown
+          # change to false if it can be turned off outside of business hours
+          Value: true

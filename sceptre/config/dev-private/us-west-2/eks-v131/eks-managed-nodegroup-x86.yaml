@@ -1,0 +1,12 @@
+template_path: eks/eks-managed-nodegroup.yaml
+parameters:
+  ClusterName: "{{ cluster_name }}{{ resource_suffix }}"
+  KubernetesVersion: "{{ kubernetes_version }}"
+  NodeGroupName: {{ cluster_name }}-x86{{ resource_suffix }}
+  UseARM: "false"
+  NodeInstanceType: t3.medium
+  NodeGroupMinSize: "1"
+  NodeGroupMaxSize: "2"
+  NodeVolumeType: gp3
+dependencies:
+  - {{ environment }}/{{ region }}/{{ eks_folder_name }}/eks.yaml

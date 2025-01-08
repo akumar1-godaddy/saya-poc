@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy DynamoDB Table via SC
+Parameters:
+  ProductVersion:
+    Type: String
+    Description: Version of the service catalog product to use
+  TableName:
+    Type: String
+    Description: Name the table
+  PartitionKeyAttributeName:
+    Type: String
+    Description: Name of the partition key
+  PartitionKeyAttributeType:
+    Type: String
+    Description: Type of the partition key
+  RangeKeyAttributeName:
+    Type: String
+    Description: Name of the range key
+    Default: ""
+  RangeKeyAttributeType:
+    Type: String
+    Description: Type of the range key
+    Default: S
+  GlobalSecondaryIndexes:
+    Type: String
+    Description: (optional) GSI data in JSON defined in service catalog product.
+    Default: ""
+  LocalSecondaryIndexes:
+    Type: String
+    Description: (optional) GSI data in JSON defined in service catalog product.
+    Default: ""
+  StreamRequired:
+    Type: String
+    Description: Should information be written to Streams? Ignored if ReplicaRegionsRequired is True
+    Default: false
+    AllowedValues:
+      - true
+      - false
+  KinesisStreamArn:
+    Type: String
+    Description: (optional) If set, record changes in the source table will be sent to the specified Kinesis stream.
+    Default: ""
+Resources:
+  DynamoTable:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: DynamoAdvanced
+      ProvisioningArtifactName: !Ref ProductVersion
+      ProvisionedProductName: !Sub ${TableName}-dynamo-table
+      ProvisioningParameters:
+        - Key: DynamoDBTableName
+          Value: !Ref TableName
+        - Key: PartitionKeyAttributeName
+          Value: !Ref PartitionKeyAttributeName
+        - Key: PartitionKeyAttributeType
+          Value: !Ref PartitionKeyAttributeType
+        - Key: RangeKeyAttributeName
+          Value: !Ref RangeKeyAttributeName
+        - Key: RangeKeyAttributeType
+          Value: !Ref RangeKeyAttributeType
+        - Key: BillingMode
+          Value: PAY_PER_REQUEST
+        - Key: GlobalSecondaryIndexes
+          Value: !Ref GlobalSecondaryIndexes
+        - Key: LocalSecondaryIndexes
+          Value: !Ref LocalSecondaryIndexes
+        - Key: StreamRequired
+          Value: !Ref StreamRequired
+        - Key: KinesisStreamArn
+          Value: !Ref KinesisStreamArn
+      Tags:
+        - Key: doNotShutDown
+          Value: "true"

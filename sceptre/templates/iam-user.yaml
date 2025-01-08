@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the IAMUser Service Catalog Product
+Parameters:
+  UserName:
+    Type: String
+    Description: A name for the IAM user.
+  VariablesJSON:
+    Type: String
+    Description: A stringified json passing in the input parameters that need to be substituted in the given policy.
+    Default: ""
+  PolicyName:
+    Type: String
+    Description: A policy name.
+    Default: ""
+  CustomPolicySuffix:
+    Type: String
+    Description: Suffix name of custom policy.
+    Default: ""
+Resources:
+  IAMUser:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: IAMUser
+      ProvisioningArtifactName: 3.2.0
+      ProvisionedProductName: !Ref UserName
+      ProvisioningParameters:
+        - Key: UserName
+          Value: !Ref UserName
+        - Key: VariablesJSON
+          Value: !Ref VariablesJSON
+        - Key: PolicyName
+          Value: !Ref PolicyName
+        - Key: CustomPolicySuffix
+          Value: !Ref CustomPolicySuffix
+      Tags:
+        - Key: doNotShutDown
+          Value: true
+Outputs:
+  StackArn:
+    Value: !GetAtt IAMUser.CloudformationStackArn
+    Description: The ARN of the created cloud formation stack

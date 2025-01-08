@@ -1,0 +1,5 @@
+template_path: eks/eks.yaml
+parameters:
+  ClusterName: "{{ cluster_name }}{{ resource_suffix }}"
+  KubernetesVersion: "{{ kubernetes_version }}"
+  CustomIAMManagedWorkerNodeRoleNameSuffix: eks-managed-node-nwk

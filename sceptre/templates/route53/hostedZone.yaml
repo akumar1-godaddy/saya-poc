@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS base hosted zone
+Parameters:
+  DomainName:
+    Type: String
+    Description: A fully-qualified domain name
+    Default: ""
+  Comments:
+    Type: String
+    Description: Any comments that you want to include about the hosted zone.
+    Default: My HostedZone
+  VpcId:
+    Type: String
+    Description: (optional) If the zone type is private, the VPC Id to which the zone should apply.
+    Default: ""
+Resources:
+  HostedZone:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: HostedZone
+      ProvisioningArtifactName: 1.0.4 
+      ProvisionedProductName: !Sub Zone-${DomainName} 
+      ProvisioningParameters:
+        - Key: DomainName
+          Value: !Ref DomainName
+        - Key: Comments
+          Value: !Ref Comments
+        - Key: VpcId
+          Value: !Ref VpcId
+      Tags:
+        - Key: doNotShutDown
+          Value: true

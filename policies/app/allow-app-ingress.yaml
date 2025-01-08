@@ -1,0 +1,16 @@
+apiVersion: crd.projectcalico.org/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-ingress
+  namespace: app-namespace
+spec:
+  tier: application
+  order: 200
+  selector: app == 'backend'
+  types:
+    - Ingress
+  ingress:
+    - action: Allow
+      source:
+        nets:
+          - 192.168.1.0/24

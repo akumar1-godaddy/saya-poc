@@ -1,0 +1,7 @@
+template_path: simple-recordset.yaml
+
+parameters:
+  Endpoint: "keychain-us-west-2-api"
+  Environment: {{ environment }}
+  ALBDNSName: {{ var.keychain_uswest2_alb_dns_name}}
+  ALBHostedZoneId: {{ var.keychain_uswest2_alb_hosted_zoneid }}

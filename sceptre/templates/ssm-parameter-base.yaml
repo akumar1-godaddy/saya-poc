@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates an SSM parameter in AWS Systems Manager Parameter Store.
+Parameters:
+  Name:
+    Type: String
+    Description: The name of the parameter.
+  Value:
+    Type: String
+    Description: The parameter value.
+  Type:
+    Type: String
+    Description: The type of parameter. Valid values are String or StringList.
+    AllowedValues:
+      - String
+      - StringList
+    Default: String
+  DataType:
+    Type: String
+    Description: The data type of the parameter, such as text or aws:ec2:image. The default is text.
+    Default: text
+Resources:
+  SSMParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Ref Name
+      Value: !Ref Value
+      Type: !Ref Type
+      DataType: !Ref DataType

@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the ECR Service Catalog Product
+Parameters:
+  ScProductVersion:
+    Type: String
+    Description: SC Product Version
+  ECRRepoName:
+    Type: String
+    Description: Name of ECR Repo
+  ProvisionedProductName:
+    Type: String
+    Description: ProvisionedProductName
+  ECRMaxImageCount:
+    Type: Number
+    Description: Max Image Versions to keep
+    Default: 100
+Resources:
+  Repository:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: ECR
+      ProvisioningArtifactName: !Ref ScProductVersion
+      ProvisionedProductName: !Ref ProvisionedProductName
+      ProvisioningParameters:
+        - Key: ECRRepoName
+          Value: !Ref ECRRepoName
+        - Key: DataClassificationTag
+          Value: "non-pii"
+        - Key: ECRMaxImageCount
+          Value: !Ref ECRMaxImageCount
+      Tags:
+        - Key: doNotShutDown
+          Value: true

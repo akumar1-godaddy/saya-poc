@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Launch Lambda function product from SC
+Parameters:
+  MemorySize:
+    Type: Number
+    Description: The Memory Size of the Lambda function.
+    Default: 128
+  Timeout:
+    Type: Number
+    Description: Duration after which lambda times out.
+    Default: 800
+  EnvironmentVariablesJson:
+    Type: String
+    Default: "{}"
+    Description: (optional) Pass environment variables to the Lambda function. This has to be a JSON escaped string.
+  LambdaName:
+    Type: String
+    Description: (optional) Name of Lambda function
+    Default: ""
+  LambdaDescription:
+    Type: String
+    Description: (optional) Description of the Lambda function
+    Default: ""
+  S3ObjectVersion:
+    Type: String
+    Description: S3ObjectVersion
+    Default: ""
+
+  S3Bucket:
+    Type: String
+    Description: S3Bucket
+    Default: ""
+  S3Key:
+    Type: String
+    Description: S3Key
+    Default: ""
+  CustomIAMRoleNameSuffix:
+    Type: String
+    Description: CustomIAMRoleNameSuffix
+    Default: ""
+  ProvisioningArtifactName:
+    Type: String
+    Description: ProvisioningArtifactName
+    Default: 2.6.1
+  Handler:
+    Type: String
+    Description: The name of the function in the source code.
+    Default: lambda_handler
+  VpcSubnetIds:
+    Type: AWS::SSM::Parameter::Value<List<String>>
+    Description: SSM parameter referencing the private dx subnet IDs
+    Default: /AdminParams/VPC/PrivateSubnets  # Use DXAppSubnets if Lambda needs DirectConnect
+  VpcSecurityGroup:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::SecurityGroup::Id>
+    Description: SSM parameter referencing the private security group ID
+    Default: /AdminParams/VPC/PrivateSG
+  TracingConfig:
+    Type: String
+    Description: (optional) The parent object that contains your function's tracing settings.
+    Default: ""
+    AllowedValues:
+      - ""
+      - Active
+      - PassThrough
+  ContainerImageUri:
+    Type: String
+    Description: URI of ECR Image to use instead of .zip archive (highly recommended), must reside in the same AWS Account. S3 and Inline code parameters will be ignored if this is set.
+    Default: ""
+  ContainerEntryPoint:
+    Type: String
+    Description: If using ContainerImageUri, optional override for container entry point to the application.
+    Default: ""
+  ContainerCommand:
+    Type: String
+    Description: If using ContainerImageUri, optional override for container parameters that you want to pass in with ENTRYPOINT.
+    Default: ""
+  ContainerWorkingDirectory:
+    Type: String
+    Description: If using ContainerImageUri, optional override for container working directory.
+    Default: ""
+  InlineCode:
+    Type: String
+    Description: The source code of the Lambda function. Node.js and Python only. Ignored if ContainerImageUri is used.
+    MaxLength: 4096
+    Default: ""
+Resources:
+  ExampleLambdaFunction:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: Lambda
+      ProvisioningArtifactName: !Ref ProvisioningArtifactName
+      ProvisionedProductName: !Sub ${LambdaName}-Lambda
+      ProvisioningParameters:
+        - Key: InlineCode
+          Value: !Ref InlineCode
+        - Key: S3Bucket
+          Value: !Ref S3Bucket
+        - Key: S3Key
+          Value: !Ref S3Key
+        - Key: Handler
+          Value: !Ref Handler
+        - Key: EnvironmentVariablesJson
+          Value: !Ref EnvironmentVariablesJson
+          # MemorySize and Timeout parameters are mostly environment specific parameters.
+        - Key: MemorySize
+          Value: !Ref MemorySize
+        - Key: Timeout
+          Value: !Ref Timeout
+        - Key: VpcSubnetIds
+          # Need to pass all List params as a String
+          Value: !Join [ ",", !Ref VpcSubnetIds ]
+        - Key: VpcSecurityGroups
+          Value: !Ref VpcSecurityGroup
+          # Optional parameters
+        - Key: S3ObjectVersion
+          Value: !Ref S3ObjectVersion
+        - Key: LambdaName
+          Value: !Ref LambdaName
+        - Key: LambdaDescription
+          Value: !Ref LambdaDescription
+        - Key: DeadLetterConfigTargetArn
+          Value: ""
+        - Key: ReservedConcurrentExecutions
+          Value: -1
+        - Key: TracingConfig
+          Value: !Ref TracingConfig
+        # The below parameter is required only when a Custom IAM role is required.
+        - Key: CustomIAMRoleNameSuffix
+          Value: !Ref CustomIAMRoleNameSuffix
+        - Key: ContainerImageUri
+          Value: !Ref ContainerImageUri
+        - Key: ContainerEntryPoint
+          Value: !Ref ContainerEntryPoint
+        - Key: ContainerCommand
+          Value: !Ref ContainerCommand
+        - Key: ContainerWorkingDirectory
+          Value: !Ref ContainerWorkingDirectory
+      Tags:
+        - Key: doNotShutDown
+          Value: true
+Outputs:
+  LambdaFunctionArn:
+    Description: Arn of created Lambda function
+    Value: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaName}
+  LambdaFunctionName:
+    Description: Name of the Lambda Function
+    Value: !Ref LambdaName

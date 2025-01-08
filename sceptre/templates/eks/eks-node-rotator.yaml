@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the EKSNodeRotator Service Catalog Product
+Parameters:
+  ClusterName:
+    Type: String
+  ProductVersion:
+    Type: String
+    Default: 2.2.0
+
+Resources:
+  KubernetesNodeRotator:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: EKSNodeRotator
+      ProvisioningArtifactName: !Ref ProductVersion
+      ProvisionedProductName: !Sub eks-node-rotator-${ClusterName}
+      ProvisioningParameters:
+        # required parameters
+        - Key: EKSClusterName
+          Value: !Ref ClusterName
+        - Key: ScheduleExpression
+          Value: "cron(42 20 * * ? *)"
+      Tags:
+        - Key: doNotShutDown
+          # change to false if it can be turned off outside of business hours
+          Value: "true"

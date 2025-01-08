@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "saya-poc"
+version = "0.1.0"
+description = ""
+authors = ["akumar1-godaddy <akumar1@godaddy.com>"]
+readme = "README.md"
+packages = [{include = "saya_poc"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+sceptre = "^4.5.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

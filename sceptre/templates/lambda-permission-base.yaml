@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the IAM Custom Policy Service Catalog Product
+Parameters:
+  FunctionName:
+    Type: String
+    Description: (required) physical ID, ARN, or alias ARN of the Lambda function to associate.
+  Action:
+    Type: String
+    Description: (required) The Lambda actions that you want to allow in this statement https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awslambda.html
+    AllowedPattern: ^lambda:.*
+    Default: 'lambda:InvokeFunction'
+  Principal:
+    Type: String
+    Description: (optional) The entity for which you are granting permission to invoke the Lambda function. This entity can be any valid AWS service principal or, if you are granting cross-account permission, an AWS account ID
+  EventSourceToken:
+    Type: String
+    Description: (optional) A unique token that must be supplied by the principal invoking the function.
+    Default: ""
+  SourceAccount:
+    Type: String
+    Description: (optional) The AWS account ID (without hyphens) of the source owner.
+    Default: ""
+  SourceArn:
+    Type: String
+    Description: (optional) The ARN of a resource that is invoking your function. This ensures that events generated only from the specified bucket can invoke the function.
+    Default: ""
+  PermissionProductName:
+    Type: String
+Resources:
+  LambdaPermission:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: LambdaPermission
+      ProvisioningArtifactName: 1.0.1
+      ProvisionedProductName: !Sub lambda-permission-${PermissionProductName}
+      ProvisioningParameters:
+        - Key: FunctionName
+          Value: !Ref FunctionName
+        - Key: Action
+          Value: !Ref Action
+        - Key: Principal
+          Value: !Ref Principal
+        - Key: EventSourceToken
+          Value: !Ref EventSourceToken
+        - Key: SourceAccount
+          Value: !Ref SourceAccount
+        - Key: SourceArn
+          Value: !Ref SourceArn
+      Tags:
+        - Key: doNotShutDown
+          Value: "true"

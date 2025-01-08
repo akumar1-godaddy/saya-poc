@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the landing zone S3 bucket
+Parameters:
+  BucketNameSuffix:
+    Type: String
+    Description: "bucket name suffix"
+  ReadOnlyRoles:
+    Type: CommaDelimitedList
+    Description: (Optional) List of IAM roles that will have read-only access to the S3 bucket. If specified then these roles will be added to the S3 bucket policy.
+    Default: ""
+  ObjectOwnership:
+    Type: String
+    Description: (Optional) Specifies an Object Ownership rule for the S3 bucket.
+    Default: BucketOwnerEnforced
+    AllowedValues:
+      - BucketOwnerEnforced
+      - ObjectWriter
+      - BucketOwnerPreferred
+      - ""
+  CustomBucketPolicyJSON:
+    Type: String
+    Description: Custom JSON S3 Bucket Policy
+    Default: ""
+    AllowedPattern: '^((?!(arn|\*):(aws|\*):(iam|\*)::\*)(?!\"\*\").|\n|\"Effect\"\:\"Deny\"\,\"Principal\":\"\*\",)*$'
+Resources:
+  Bucket:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: S3
+      ProvisioningArtifactName: 1.19.1
+      ProvisionedProductName: !Ref BucketNameSuffix
+      ProvisioningParameters:
+        - Key: BucketNameSuffix
+          Value: !Ref BucketNameSuffix
+        - Key: ReadOnlyRoles
+          Value: !Join [ ",", !Ref ReadOnlyRoles ]
+        - Key: ObjectOwnership
+          Value: !Ref ObjectOwnership
+        - Key: CustomBucketPolicyJSON
+          Value: !Ref CustomBucketPolicyJSON
+      Tags:
+        - Key: doNotShutDown
+          Value: true
+Outputs:
+  BucketName:
+    Description: Name of created S3 Bucket
+    Value: !GetAtt Bucket.Outputs.BucketName
+  ARN:
+    Description: ARN of created S3 Bucket
+    Value: !GetAtt Bucket.Outputs.ARN

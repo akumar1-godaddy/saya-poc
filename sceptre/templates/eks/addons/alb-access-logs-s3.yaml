@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the S3 Service Catalog Product
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Name of the project
+  BucketNameSuffix:
+    Type: String
+    MinLength: 1
+    AllowedPattern: "[a-z][a-z0-9-]+[a-z0-9]"
+    Description: Unique naming suffix for bucket
+  Environment:
+    Type: String
+    Description: environment
+Resources:
+  Bucket:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: S3
+      ProvisioningArtifactName: 1.19.1
+      ProvisionedProductName: !Sub ${BucketNameSuffix}-s3
+      ProvisioningParameters:
+        - Key: BucketNameSuffix
+          Value: !Ref BucketNameSuffix
+        - Key: CustomBucketPolicyJSON
+          Value: !Sub | 
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Principal": {
+                    "AWS": "${AWS::AccountId}"
+                  },
+                  "Action": "s3:*",
+                  "Resource": "arn:aws:s3:::gd-${ProjectName}-${Environment}-${BucketNameSuffix}/*"
+                },
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "AWS": "arn:aws:iam::797873946194:root",
+                      "AWS": "arn:aws:iam::127311923021:root"
+                    },
+                    "Action": "s3:PutObject",
+                    "Resource": "arn:aws:s3:::gd-${ProjectName}-${Environment}-${BucketNameSuffix}/apis/AWSLogs/*"
+                }
+            ]}
+      Tags:
+        - Key: doNotShutDown
+          Value: "true"
+Outputs:
+  BucketName:
+    Description: Name of created S3 Bucket
+    Value: !GetAtt Bucket.Outputs.BucketName
+  ARN:
+    Description: ARN of created S3 Bucket
+    Value: !GetAtt Bucket.Outputs.ARN

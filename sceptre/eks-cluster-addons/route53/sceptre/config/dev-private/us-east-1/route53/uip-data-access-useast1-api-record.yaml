@@ -1,0 +1,7 @@
+template_path: simple-recordset.yaml
+
+parameters:
+  Endpoint: "uip-data-access-us-east-1-api"
+  Environment: {{ environment }}
+  ALBDNSName: {{ var.uip_data_access_useast1_alb_dns_name}}
+  ALBHostedZoneId: {{ var.uip_data_access_useast1_alb_hosted_zoneid }}

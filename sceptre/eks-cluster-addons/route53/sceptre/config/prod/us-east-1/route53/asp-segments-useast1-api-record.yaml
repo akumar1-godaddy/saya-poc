@@ -1,0 +1,7 @@
+template_path: simple-recordset.yaml
+
+parameters:
+  Endpoint: "asp-segments-us-east-1-api"
+  Environment: {{ environment }}
+  ALBDNSName: {{ var.asp_segments_useast1_alb_dns_name}}
+  ALBHostedZoneId: {{ var.asp_segments_useast1_alb_hosted_zoneid }}

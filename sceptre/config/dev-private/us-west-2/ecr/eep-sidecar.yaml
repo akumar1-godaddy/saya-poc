@@ -1,0 +1,4 @@
+template_path: ecr/ecr.yaml
+parameters:
+  RepoName: "eep-sidecar"
+  ECRMaxImageCount: "10"

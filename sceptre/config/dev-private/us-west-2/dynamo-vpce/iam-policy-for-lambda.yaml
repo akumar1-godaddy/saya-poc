@@ -1,0 +1,31 @@
+template_path: iam-policy-base.yaml
+parameters:
+  PolicyNameSuffix: dynamo-access
+  PolicyJSON: |
+    {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Statement1",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream",
+                "logs:CreateLogGroup",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "arn:aws:logs:*:*:*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:*Get*",
+                "dynamodb:Describe*",
+                "dynamodb:Query",
+                "dynamodb:Scan"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:us-west-2:419893066442:table/user-insight-registry"
+            ]
+        }
+        ]
+     }

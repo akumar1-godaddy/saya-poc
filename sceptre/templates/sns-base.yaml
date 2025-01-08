@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the SNS Service Catalog Product
+Parameters:
+  # Must be provided by env/region specific config
+  SnsTopicName:
+    Type: String
+    Description: SNS Topic Name. This value will be pushed from the configs.yaml pertaining to the region or the account based on the team's requirement
+  TeamSlackWebHook:
+    Type: String
+    Description: Slack webhook for notifications
+    Default: ""
+  PolicyDocument:
+    Type: String
+    Description: (optional) A policy document that contains permissions to add to the specified SNS topics.
+    Default: ""
+  QueueName:
+    Type: String
+    Description: SQS Queue name for notifications
+    Default: ""
+  NeedEncryption:
+    Type: String
+    Description: Select true if encryption at rest needs to be enabled.
+    Default: false
+    AllowedValues:
+      - true
+      - false
+  FifoTopic:
+    Type: String
+    Description: Set to true to create a FIFO topic.
+    Default: false
+    AllowedValues:
+      - ""
+      - true
+      - false
+  ContentBasedDeduplication:
+    Type: String
+    Description: Enables content-based deduplication for FIFO topics.
+    Default: false
+    AllowedValues:
+      - true
+      - false
+Resources:
+  SnsTopic:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: SNS
+      ProvisioningArtifactName: 2.0.0
+      ProvisionedProductName: !Ref SnsTopicName
+      ProvisioningParameters:
+        # required parameters
+        - Key: PolicyDocument
+          Value: !Ref PolicyDocument
+        - Key: SnsTopicName
+          Value: !Ref SnsTopicName
+        - Key: TeamSlackWebHook
+          Value: !Ref TeamSlackWebHook
+        - Key: QueueName
+          Value: !Ref QueueName
+        - Key: NeedEncryption
+          Value: !Ref NeedEncryption
+        - Key: FifoTopic
+          Value: !Ref FifoTopic
+        - Key: ContentBasedDeduplication
+          Value: !Ref ContentBasedDeduplication
+      Tags:
+        - Key: doNotShutDown
+          Value: true
+Outputs:
+  SnsTopicArn:
+    Description: The ARN of the SNS Topic created.
+    Value: !Sub arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${SnsTopicName}

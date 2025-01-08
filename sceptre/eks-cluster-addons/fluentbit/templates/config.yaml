@@ -1,0 +1,99 @@
+# https://aws.amazon.com/blogs/opensource/splitting-application-logs-multiple-streams-fluent/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: fluentbit
+  labels:
+    app.kubernetes.io/name: fluentbit
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Parsers_File        /fluent-bit/parsers/parsers.conf
+    [INPUT]
+        Name                tail
+        Tag                 kube.*
+        Path                /var/log/containers/*.log
+        Exclude_Path        /var/log/containers/fluent*.log
+        DB                  /var/log/containers/log.db
+        Parser              docker
+        Skip_Long_Lines     Off
+        Refresh_Interval    10
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_URL            https://kubernetes.default.svc.cluster.local:443
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude On
+        Merge_Log           On
+        Keep_Log            Off
+        Labels              Off
+        Annotations         Off
+    [FILTER]
+        Name                modify
+        Match               kube.*
+        Rename  log message
+    [OUTPUT]
+        Name                kinesis
+        Match               kube.*
+        region              {{ .Values.aws_region }}
+        stream              gd-userinsigh-{{ .Values.environment }}-app-logs-stream
+    @INCLUDE custom.conf
+    @INCLUDE systemd.conf
+    @INCLUDE security.conf
+  systemd.conf: |
+    [INPUT]
+        Name                systemd
+        Tag                 systemd.*
+        Path                /var/log/journal
+        Systemd_Filter      _SYSTEMD_UNIT=docker.service
+        Systemd_Filter      _SYSTEMD_UNIT=kubelet.service
+        Read_From_Tail      true
+    [OUTPUT]
+        Name                kinesis
+        Match               systemd.*
+        region              {{ .Values.aws_region }}
+        stream              gd-userinsigh-{{ .Values.environment }}-sys-logs-stream
+  security.conf: |
+    [FILTER]
+        Name   lua
+        Match  *
+        script security.lua
+        call   cb_filter
+    [FILTER]
+        Name          rewrite_tag
+        Match         *
+        Rule          $labels['security'] .? SECURITY.GEN.APP.$service['name'].PROD TRUE
+        Emitter_Name  re_emitted
+    [OUTPUT]
+        Name                kinesis
+        Match               SECURITY.*
+        region              {{ .Values.aws_region }}
+        stream              gd-userinsigh-{{ .Values.environment }}-app-security-logs-stream
+  security.lua: |
+    function cb_filter(tag, timestamp, record)
+      local tags = record["tags"] or record["tag"]
+      if (tags == nil) then
+          return 0, timestamp, record
+      end
+      local match = false
+      for k, tag in ipairs(tags) do
+          if tag == "security" then
+              match = true
+              break
+          end
+      end
+      if (not match) then
+          return 0, timestamp, record
+      end
+      new_record = record
+      if (new_record["labels"] ~= nil) then
+          new_record["labels"]["security"] = "true"
+      else
+          new_record["labels"]= {}
+          new_record["labels"]["security"] = "true"
+      end
+      return 1, timestamp, new_record
+    end
+  custom.conf: |-
+##CustomConfig##

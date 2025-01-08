@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy the IAM Custom Role Service Catalog Product.
+Parameters:
+  RoleNameSuffix:
+    Type: String
+    Description: Name of custom Role appended to TeamName-custom-
+  ManagedPolicyArns:
+    Type: String
+    Description: Comma delimited list of Managed IAM Policy ARNs to attach to the Role (but marked as String). Please be aware these ARNs are account specific. In this example we are providing the format for an ARN of the IAM::Policy that was created providing permissions to RedShift
+    Default: ""
+  AssumingServices:
+    Type: String
+    Description: Comma delimited list of Services that needs to assume the role (but marked as String)
+  AssumingRoles:
+    Type: String
+    Description: Comma delimited list of Services that needs to assume the role (but marked as String)
+    Default: ""
+  IAMRoleProvisioningName:
+    Type: String
+    Description: Provisioning Artifact Name to be provided.
+
+Resources:
+  IAMRole:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: IAMRole
+      ProvisioningArtifactName: !Ref IAMRoleProvisioningName #"1.0.7"
+      ProvisionedProductName:
+        Fn::Sub: "${RoleNameSuffix}"
+      ProvisioningParameters:
+        - Key: AssumingServices
+          Value: !Ref AssumingServices
+        - Key: AssumingRoles
+          Value: !Ref AssumingRoles
+        - Key: RoleNameSuffix
+          Value: !Ref RoleNameSuffix
+        - Key: ManagedPolicyArns
+          Value: !Ref ManagedPolicyArns
+      Tags:
+        - Key: doNotShutDown
+          # change to false if it can be turned off outside of business hours
+          Value: "true"

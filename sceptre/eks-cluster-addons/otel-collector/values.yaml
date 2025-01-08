@@ -1,0 +1,76 @@
+mode: daemonset
+
+config:
+  receivers:
+    jaeger: null
+    prometheus: null
+    zipkin: null
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+  exporters:
+    otlp/elastic:
+      # Elastic APM server https endpoint without the "https://" prefix
+      endpoint: "${ELASTIC_APM_SERVER_ENDPOINT}" 
+      headers:
+        # Elastic APM Server secret token
+        Authorization: "Bearer ${ELASTIC_APM_SERVER_TOKEN}"
+  processors:
+    memory_limiter:
+      check_interval: 5s
+      limit_mib: 200
+      spike_limit_mib: 100
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [batch, memory_limiter]
+        exporters: [otlp/elastic]
+      metrics: null
+      logs: null
+    telemetry: null
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 200M
+
+ports:
+  otlp:
+    enabled: true
+    containerPort: 4317
+    servicePort: 4317
+    hostPort: 4317
+    protocol: TCP
+  otlp-http:
+    enabled: true
+    containerPort: 4318
+    servicePort: 4318
+    hostPort: 4318
+    protocol: TCP
+  zipkin: null
+  jaeger-thrift: null
+  jaeger-compact: null
+  jaeger-grpc: null
+
+image:
+  tag: 0.69.0
+
+extraEnvs:
+  - name: "ELASTIC_APM_SERVER_TOKEN"
+    valueFrom:
+      secretKeyRef:
+        name: apm-credentials
+        key: apm_secret_token
+  - name: "ELASTIC_APM_SERVER_ENDPOINT"
+    valueFrom:
+      secretKeyRef:
+        name: apm-credentials
+        key: apm_server_url
+
+presets:
+  hostMetrics:
+    enabled: false
+  logsCollection: 
+    enabled: false

@@ -1,0 +1,16 @@
+apiVersion: crd.projectcalico.org/v1
+kind: GlobalNetworkPolicy
+metadata:
+  name: namespace-isolation
+spec:
+  tier: security
+  order: 200
+  selector: all()
+  ingress:
+    - action: Deny
+      source:
+        namespaceSelector: "!has(namespace-access)"
+  egress:
+    - action: Deny
+      destination:
+        namespaceSelector: "!has(namespace-access)"

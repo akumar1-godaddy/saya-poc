@@ -1,4 +1,4 @@
-```markdown
+
 # Kubernetes Network Policies - Usage Guide
 
 This repository contains network policies and test scripts to validate network isolation and connectivity within a Kubernetes cluster. The policies are organized into tiers (`app` and `security`), and test scripts are provided to validate their functionality.
@@ -46,6 +46,44 @@ This repository contains network policies and test scripts to validate network i
 ### **How Tiering Works**
 - Tiers define the order in which policies are applied.
 - `security` tier policies have higher precedence, ensuring organization-wide rules are enforced before application-specific rules.
+- **Use Case:** If the security team applies a `deny-all-global` policy in the `security` tier, the application team can only add exceptions (e.g., for specific egress or ingress rules) in the `app` tier.
+
+---
+
+## Quarantine Policy
+
+The quarantine policy isolates pods by applying ingress and egress restrictions to pods with the `quarantine=true` label.
+
+### **Policy Example**
+
+```yaml
+apiVersion: crd.projectcalico.org/v1
+kind: GlobalNetworkPolicy
+metadata:
+  name: pod-quarantine-policy
+spec:
+  tier: security
+  order: 100
+  selector: quarantine == 'true'
+  types:
+    - Ingress
+    - Egress
+  ingress:
+    - action: Deny
+  egress:
+    - action: Deny
+```
+
+**How It Works:**
+1. Any pod labeled with `quarantine=true` is denied all ingress and egress traffic.
+2. To quarantine a pod:
+   ```bash
+   kubectl label pod <pod-name> quarantine=true
+   ```
+3. To remove quarantine:
+   ```bash
+   kubectl label pod <pod-name> quarantine-
+   ```
 
 ---
 
@@ -63,7 +101,7 @@ This repository contains network policies and test scripts to validate network i
    Create namespaces required by the test pods:
    ```bash
    kubectl create namespace app-namespace || true
-   kubectl create namespace default || true
+   kubectl create namespace test-namespace || true
    ```
 
 4. **Create Test Pods**:
@@ -139,7 +177,7 @@ Tests deny-all or allow-all global policies.
    ```bash
    kubectl delete -f policies/app/
    kubectl delete -f policies/security/
-   kubectl delete namespace app-namespace default
+   kubectl delete namespace app-namespace test-namespace
    ```
 
 ---
@@ -165,5 +203,5 @@ Each test script provides logs indicating whether the test passed or failed. If 
 
 ## Notes
 - Each test script logs its actions and results for easier debugging.
-- Store this guide in your repository for future reference.
+- Tiers ensure proper enforcement of organization-wide policies (`security`) and application-specific policies (`app`).
 ```

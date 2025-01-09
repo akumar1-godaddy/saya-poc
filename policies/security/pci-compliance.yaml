@@ -1,0 +1,15 @@
+apiVersion: crd.projectcalico.org/v1
+kind: GlobalNetworkPolicy
+metadata:
+  name: pci-compliance
+spec:
+  selector: pci-compliant == 'true'
+  egress:
+    - action: Allow
+      destination:
+        nets:
+          - 192.168.1.0/24
+  ingress:
+    - action: Allow
+      source:
+        selector: pci-compliant == 'true'
